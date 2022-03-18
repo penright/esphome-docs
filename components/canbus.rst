@@ -52,7 +52,10 @@ Each canbus platform extends this configuration schema.
               std::string b(x.begin(), x.end());
               ESP_LOGD("can id 500", "%s", &b[0] );
 
+.. _config-canbus:
+
 Configuration variables:
+************************
 
 - **id** (*Optional*, :ref:`config-id`): Manually specify the ID used for code generation.
 - **can_id** (**Required**, int): default *can id* used for transmitting frames.
@@ -79,6 +82,7 @@ Configuration variables:
     - 1000KBPS
 
 Automations:
+------------
 
 - **on_frame** (*Optional*, :ref:`Automation <automation>`): An automation to perform when ability
   CAN Frame is received. See :ref:`canbus-on-frame`.
@@ -146,13 +150,45 @@ ESP32 CAN Component
 -------------------
 
 The ESP32 has an integrated CAN controller and therefore doesn't need an external controller necessarily.
-You only need to specify the RX and TX pins.
+You only need to specify the RX and TX pins. Any GPIO will work.
+
+.. code-block:: yaml
+
+    # Example configuration entry
+    canbus:
+      - platform: esp32_can
+        tx_pin: GPIO5
+        rx_pin: GPIO4
+        can_id: 4
+        bit_rate: 50kbps
+        on_frame:
+          ...
+
+Wiring options
+**************
+
+5V CAN transceivers are cheap and generate compliant levels. If you power your
+board with 5V this is the preferred option. R501 is important to reduce the 5V
+logic level down to 3.3V, to avoid damaging the ESP32. You can alternatively
+use a voltage divider here instead.
+
+.. figure:: images/canbus_esp32_5v.png
+    :align: center
+    :target: ../_images/canbus_esp32_5v.png
+
+If you prefer to only have a 3.3V power supply, special 3.3V CAN transceivers are available.
+
+.. figure:: images/canbus_esp32_3v3.png
+    :align: center
+    :target: ../_images/canbus_esp32_3v3.png
+
 
 Configuration variables:
 ************************
 
 - **rx_pin** (**Required**, :ref:`Pin <config-pin>`): Receive pin.
 - **tx_pin** (**Required**, :ref:`Pin <config-pin>`): Transmit pin.
+- All other options from :ref:`Canbus <config-canbus>`.
 
 MCP2515 Component
 -----------------
@@ -161,20 +197,6 @@ The MCP2515 is a spi device and therefore you must first add the configuration f
 You need to have an :ref:`SPI bus <spi>` in your configuration with both the **mosi_pin** and **miso_pin** set.
 
 For wiring up the MSP2515 please refer to the section below.
-
-Configuration variables:
-************************
-
-- **cs_pin** (**Required**, :ref:`Pin Schema <config-pin_schema>`): Is used to tell the receiving SPI device
-  when it should listen for data on the SPI bus. Each device has an individual ``CS`` line.
-  Sometimes also called ``SS``.
-- **clock** (*Optional*): One of ``8MHZ``, ``16MHZ`` or ``20MHZ``. Clock crystal used on the MCP2515 device.
-  Defaults to ``8MHZ``.
-- **mode** (*Optional*): Operation mode. Default to ``NORMAL``
-
-  - NORMAL: Normal operation
-  - LOOPBACK: Loopback mode can be used to just test you spi connections to the device
-  - LISTENONLY: only receive data
 
 .. code-block:: yaml
 
@@ -197,8 +219,25 @@ Configuration variables:
                 id: light_1
                 brightness: !lambda "return (x.size() > 0) ? (float) x[0]/255 : 0;"
 
+Configuration variables:
+************************
+
+- **cs_pin** (**Required**, :ref:`Pin Schema <config-pin_schema>`): Is used to tell the receiving SPI device
+  when it should listen for data on the SPI bus. Each device has an individual ``CS`` line.
+  Sometimes also called ``SS``.
+- **clock** (*Optional*): One of ``8MHZ``, ``16MHZ`` or ``20MHZ``. Clock crystal used on the MCP2515 device.
+  Defaults to ``8MHZ``.
+- **mode** (*Optional*): Operation mode. Default to ``NORMAL``
+
+  - NORMAL: Normal operation
+  - LOOPBACK: Loopback mode can be used to just test you spi connections to the device
+  - LISTENONLY: only receive data
+
+- All other options from :ref:`Canbus <config-canbus>`.
+
 Wiring options
----------------
+**************
+
 Easiest approach is to just use fully assembled boards and just add one resistor in the MISO line.
 This runs MOSI, SCK and CS out of specification which is nearly never a problem.
 
